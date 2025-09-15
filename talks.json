@@ -1,0 +1,103 @@
+{
+  "series": "YC AI Startup School",
+  "talks": [
+    {
+      "speaker": "Replit CEO Amjad Masad",
+      "title": "The Future of Software Creation",
+      "date": "",
+      "source_url": "https://www.youtube.com/watch?v=lWmDiDGsLK4",
+      "transcript": "This chapter is a placeholder for the full transcript.\n\nSource video: https://www.youtube.com/watch?v=lWmDiDGsLK4\n\nOnce subtitles are fetched (see README), this will be replaced by the full talk text."
+    },
+    {
+      "speaker": "Michael Truell",
+      "title": "Building Cursor At 23, Taking On GitHub Copilot & Advice To Engineering Students",
+      "date": "",
+      "source_url": "https://www.youtube.com/watch?v=TrXi3naD6Og",
+      "transcript": "This chapter is a placeholder for the full transcript.\n\nSource video: https://www.youtube.com/watch?v=TrXi3naD6Og\n\nOnce subtitles are fetched (see README), this will be replaced by the full talk text."
+    },
+    {
+      "speaker": "Dylan Field",
+      "title": "Scaling Figma and the Future of Design",
+      "date": "",
+      "source_url": "https://www.youtube.com/watch?v=-7Qz7tSTfUU",
+      "transcript": "This chapter is a placeholder for the full transcript.\n\nSource video: https://www.youtube.com/watch?v=-7Qz7tSTfUU\n\nOnce subtitles are fetched (see README), this will be replaced by the full talk text."
+    },
+    {
+      "speaker": "Anthropic Co-founder Jared Kaplan",
+      "title": "Scaling and the Road to Human-Level AI",
+      "date": "",
+      "source_url": "https://www.youtube.com/watch?v=p8Jx4qvDoSo",
+      "transcript": "This chapter is a placeholder for the full transcript.\n\nSource video: https://www.youtube.com/watch?v=p8Jx4qvDoSo\n\nOnce subtitles are fetched (see README), this will be replaced by the full talk text."
+    },
+    {
+      "speaker": "Chelsea Finn",
+      "title": "Building Robots That Can Do Anything",
+      "date": "",
+      "source_url": "https://www.youtube.com/watch?v=a8-QsBHoH94",
+      "transcript": "This chapter is a placeholder for the full transcript.\n\nSource video: https://www.youtube.com/watch?v=a8-QsBHoH94\n\nOnce subtitles are fetched (see README), this will be replaced by the full talk text."
+    },
+    {
+      "speaker": "Nobel Laureate John Jumper",
+      "title": "AI is Revolutionizing Scientific Discovery",
+      "date": "",
+      "source_url": "https://www.youtube.com/watch?v=2Yguz5U-Nic",
+      "transcript": "This chapter is a placeholder for the full transcript.\n\nSource video: https://www.youtube.com/watch?v=2Yguz5U-Nic\n\nOnce subtitles are fetched (see README), this will be replaced by the full talk text."
+    },
+    {
+      "speaker": "Aravind Srinivas",
+      "title": "Perplexity's Race to Build Agentic Search",
+      "date": "",
+      "source_url": "https://www.youtube.com/watch?v=2jOnoTEk-xA",
+      "transcript": "This chapter is a placeholder for the full transcript.\n\nSource video: https://www.youtube.com/watch?v=2jOnoTEk-xA\n\nOnce subtitles are fetched (see README), this will be replaced by the full talk text."
+    },
+    {
+      "speaker": "AI",
+      "title": "Andrew Ng: Building Faster",
+      "date": "",
+      "source_url": "https://www.youtube.com/watch?v=RNJCfif1dPY",
+      "transcript": "This chapter is a placeholder for the full transcript.\n\nSource video: https://www.youtube.com/watch?v=RNJCfif1dPY\n\nOnce subtitles are fetched (see README), this will be replaced by the full talk text."
+    },
+    {
+      "speaker": "François Chollet",
+      "title": "How We Get To AGI",
+      "date": "",
+      "source_url": "https://www.youtube.com/watch?v=5QcCeSsNRks",
+      "transcript": "This chapter is a placeholder for the full transcript.\n\nSource video: https://www.youtube.com/watch?v=5QcCeSsNRks\n\nOnce subtitles are fetched (see README), this will be replaced by the full talk text."
+    },
+    {
+      "speaker": "Fei-Fei Li",
+      "title": "Spatial Intelligence is the Next Frontier in AI",
+      "date": "",
+      "source_url": "https://www.youtube.com/watch?v=_PioN-CpOP0",
+      "transcript": "This chapter is a placeholder for the full transcript.\n\nSource video: https://www.youtube.com/watch?v=_PioN-CpOP0\n\nOnce subtitles are fetched (see README), this will be replaced by the full talk text."
+    },
+    {
+      "speaker": "Satya Nadella",
+      "title": "Microsoft's AI Bets, Hyperscaling, Quantum Computing Breakthroughs",
+      "date": "",
+      "source_url": "https://www.youtube.com/watch?v=AUUZuzVHKdo",
+      "transcript": "This chapter is a placeholder for the full transcript.\n\nSource video: https://www.youtube.com/watch?v=AUUZuzVHKdo\n\nOnce subtitles are fetched (see README), this will be replaced by the full talk text."
+    },
+    {
+      "speaker": "Sam Altman",
+      "title": "The Future of OpenAI, ChatGPT's Origins, and Building AI Hardware",
+      "date": "",
+      "source_url": "https://www.youtube.com/watch?v=V979Wd1gmTU",
+      "transcript": "This chapter is a placeholder for the full transcript.\n\nSource video: https://www.youtube.com/watch?v=V979Wd1gmTU\n\nOnce subtitles are fetched (see README), this will be replaced by the full talk text."
+    },
+    {
+      "speaker": "Elon Musk",
+      "title": "Digital Superintelligence, Multiplanetary Life, How to Be Useful",
+      "date": "",
+      "source_url": "https://www.youtube.com/watch?v=cFIlta1GkiE",
+      "transcript": "This chapter is a placeholder for the full transcript.\n\nSource video: https://www.youtube.com/watch?v=cFIlta1GkiE\n\nOnce subtitles are fetched (see README), this will be replaced by the full talk text."
+    },
+    {
+      "speaker": "Andrej Karpathy",
+      "title": "Software Is Changing (Again)",
+      "date": "",
+      "source_url": "https://www.youtube.com/watch?v=LCEmiRjPEtQ",
+      "transcript": "This chapter is a placeholder for the full transcript.\n\nSource video: https://www.youtube.com/watch?v=LCEmiRjPEtQ\n\nOnce subtitles are fetched (see README), this will be replaced by the full talk text."
+    }
+  ]
+}

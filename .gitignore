@@ -1,0 +1,10 @@
+build/
+*.epub
+*.pdf
+*.html
+*.log
+*.aux
+*.out
+*.toc
+__pycache__/
+cookies.txt

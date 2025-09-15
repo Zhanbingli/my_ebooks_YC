@@ -1,0 +1,13 @@
+{
+  "series": "YC AI Startup School",
+  "talks": [
+    {
+      "speaker": "Speaker Name",
+      "title": "Talk Title",
+      "date": "2023-10-01",
+      "source_url": "https://example.com/talk-url",
+      "transcript": "Paste the full transcript text here. Separate paragraphs with blank lines."
+    }
+  ]
+}
+
