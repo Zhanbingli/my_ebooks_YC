@@ -419,43 +419,76 @@ def fetch_transcript_with_library(video_id: str, langs: List[str]) -> Optional[s
         from youtube_transcript_api import YouTubeTranscriptApi
     except Exception:
         return None
-    # Try languages in order; fall back to translated transcript to English.
-    for lang in langs:
+    transcript = None
+    try:
+        # New API (v1.2+): instance methods
+        api = YouTubeTranscriptApi()
+        # Try preferred languages
         try:
-            transcript = YouTubeTranscriptApi.get_transcript(video_id, languages=[lang])
-            break
+            transcript = api.fetch(video_id, languages=langs)
         except Exception:
-            transcript = None
-    if transcript is None:
-        try:
-            transcript = YouTubeTranscriptApi.get_transcript(video_id, languages=['en'])
-        except Exception:
-            transcript = None
-    if transcript is None:
-        try:
-            # Try translated transcript to English if original not available
-            full = YouTubeTranscriptApi.list_transcripts(video_id)
-            for tr in full:
-                try:
-                    translated = tr.translate('en')
-                    transcript = translated.fetch()
-                    break
-                except Exception:
-                    continue
-        except Exception:
-            transcript = None
+            # Try English fallback
+            try:
+                transcript = api.fetch(video_id, languages=['en'])
+            except Exception:
+                transcript = None
+        if transcript is None:
+            # Try translated transcript to English
+            try:
+                tl = api.list(video_id)
+                for tr in tl:
+                    try:
+                        t = tr.translate('en').fetch()
+                        if t:
+                            transcript = t
+                            break
+                    except Exception:
+                        continue
+            except Exception:
+                transcript = None
+    except TypeError:
+        # Older API with static methods
+        for lang in langs:
+            try:
+                transcript = YouTubeTranscriptApi.get_transcript(video_id, languages=[lang])
+                break
+            except Exception:
+                transcript = None
+        if transcript is None:
+            try:
+                transcript = YouTubeTranscriptApi.get_transcript(video_id, languages=['en'])
+            except Exception:
+                transcript = None
+        if transcript is None:
+            try:
+                full = YouTubeTranscriptApi.list_transcripts(video_id)
+                for tr in full:
+                    try:
+                        translated = tr.translate('en')
+                        transcript = translated.fetch()
+                        break
+                    except Exception:
+                        continue
+            except Exception:
+                transcript = None
     if not transcript:
         return None
-    # transcript is a list of dicts: {'text': str, 'start': float, 'duration': float}
+    # transcript is a list of dicts or objects with attrs: text, start, duration
     lines = []
     last_end = 0.0
     buf: List[str] = []
     paras: List[str] = []
     for item in transcript:
-        s = float(item.get('start', 0.0))
-        d = float(item.get('duration', 0.0))
+        if isinstance(item, dict):
+            s = float(item.get('start', 0.0))
+            d = float(item.get('duration', 0.0))
+            txt = (item.get('text') or '')
+        else:
+            s = float(getattr(item, 'start', 0.0))
+            d = float(getattr(item, 'duration', 0.0))
+            txt = getattr(item, 'text', '')
         e = s + d
-        txt = (item.get('text') or '').replace('\n', ' ').strip()
+        txt = str(txt).replace('\n', ' ').strip()
         if not txt:
             continue
         if s - last_end > 2.5 and buf:

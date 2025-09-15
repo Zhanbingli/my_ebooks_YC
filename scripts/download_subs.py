@@ -6,6 +6,7 @@ import re
 import subprocess
 import sys
 from typing import Dict, Any, List, Optional, Tuple
+import shutil
 
 
 # Reuse heuristics from fetch script by importing dynamically
@@ -25,6 +26,26 @@ UA = (
 def run(cmd: List[str]) -> int:
     print("$", " ".join(cmd))
     return subprocess.call(cmd)
+
+
+def find_yt_dlp() -> Optional[str]:
+    # Prefer env override
+    env_path = os.environ.get('YTDLP') or os.environ.get('YT_DLP')
+    if env_path and os.path.exists(env_path):
+        return env_path
+    # macOS user install default path
+    mac_user_bin = os.path.expanduser('~/Library/Python/3.9/bin/yt-dlp')
+    if os.path.exists(mac_user_bin):
+        return mac_user_bin
+    # Common PATH lookup
+    which = shutil.which('yt-dlp') or shutil.which('yt_dlp')
+    if which:
+        return which
+    # Homebrew path
+    brew_bin = '/opt/homebrew/bin/yt-dlp'
+    if os.path.exists(brew_bin):
+        return brew_bin
+    return None
 
 
 def find_vtt_for_video(subs_dir: str, video_id: str) -> Optional[str]:
@@ -67,23 +88,52 @@ def parse_vtt_to_paragraphs(path: str) -> str:
         if re.match(r"^\d+$", ln):
             # cue identifier; skip
             continue
-        # De-duplicate musical notes or annotations in <> where present
+        # Skip common VTT metadata lines
+        if re.match(r"^(Kind|Language|Style|Region):", ln, flags=re.IGNORECASE):
+            continue
+        # Skip lines that are character-level time-coded (contain <c> or <00:..>)
+        if '<c>' in ln or re.search(r"<\d{2}:\d{2}:\d{2}\.\d{3}>", ln):
+            continue
+        # Remove simple annotation tags like <...> or [Music]
         clean = re.sub(r"<[^>]+>", "", ln)
-        text_lines.append(clean)
+        clean = re.sub(r"\[(music|applause|laughter|inaudible)[^\]]*\]", "", clean, flags=re.IGNORECASE)
+        # Skip consecutive duplicates
+        trimmed = clean.strip()
+        if text_lines and trimmed and text_lines[-1] == trimmed:
+            continue
+        text_lines.append(trimmed)
 
     # Merge into paragraphs on blank lines and also cap by length
     paras: List[str] = []
     buf: List[str] = []
+    seen_in_para = set()
     for ln in text_lines:
         if not ln.strip():
-            if buf:
-                paras.append(" ".join(buf))
-                buf = []
+            # treat blank as soft separator; do not flush paragraph immediately
             continue
-        buf.append(ln.strip())
+        frag = ln.strip()
+        if buf and frag:
+            last = buf[-1]
+            if last == frag:
+                # avoid consecutive duplicates
+                continue
+            # Roll-up captions: if new line extends the last line, replace it
+            if frag.startswith(last) and len(frag) > len(last) + 2:
+                buf[-1] = frag
+                continue
+            # Conversely, if last is an extension of current, drop current
+            if last.startswith(frag) and len(last) > len(frag) + 2:
+                continue
+        if frag and frag in seen_in_para:
+            # avoid duplicate lines within the same paragraph
+            continue
+        buf.append(frag)
+        if frag:
+            seen_in_para.add(frag)
         if len(" ".join(buf)) > 800:
             paras.append(" ".join(buf))
             buf = []
+            seen_in_para.clear()
     if buf:
         paras.append(" ".join(buf))
     # Cleanup spaces
@@ -204,13 +254,28 @@ def main():
         url = v.get('url')
         print(f"[{i}/{len(videos)}] {vid} — {title}")
         # Download subs
-        cmd = [os.path.expanduser('~/Library/Python/3.9/bin/yt-dlp'), '--skip-download', '--write-auto-sub', '--write-sub', '--sub-lang', 'en,en-US,en-GB', '--sub-format', 'vtt', '-o', os.path.join(args.subs_dir, '%(id)s.%(ext)s'), '--ignore-no-formats-error']
-        if args.cookies:
-            cmd += ['--cookies', args.cookies]
-        elif args.browser:
-            cmd += ['--cookies-from-browser', args.browser]
-        cmd.append(url)
-        rc = run(cmd)
+        ytdlp = find_yt_dlp()
+        if not ytdlp:
+            print("  yt-dlp not found. Please install yt-dlp or set YTDLP env var to its path.", file=sys.stderr)
+            rc = 1
+        else:
+            cmd = [ytdlp,
+                   '--skip-download',
+                   '--write-auto-sub', '--write-sub',
+                   '--sub-lang', 'en,en-US,en-GB',
+                   '--sub-format', 'vtt',
+                   # Improve YouTube handling by selecting web/ios clients and disabling throttling side-effects
+                   '--extractor-args', 'youtube:player_client=web,web_creator,ios|njsig']
+            # Output template into subs dir
+            cmd += ['-o', os.path.join(args.subs_dir, '%(id)s.%(ext)s')]
+            # Be tolerant if no streams are downloadable
+            cmd += ['--ignore-no-formats-error']
+            if args.cookies:
+                cmd += ['--cookies', args.cookies]
+            elif args.browser:
+                cmd += ['--cookies-from-browser', args.browser]
+            cmd.append(url)
+            rc = run(cmd)
         transcript = None
         if rc == 0:
             vtt = find_vtt_for_video(args.subs_dir, vid)
