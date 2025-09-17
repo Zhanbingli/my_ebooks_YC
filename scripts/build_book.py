@@ -1,73 +1,47 @@
 #!/usr/bin/env python3
-import os
+"""CLI wrapper to assemble the Markdown book."""
+
+from __future__ import annotations
+
+import argparse
+from pathlib import Path
 import sys
-from datetime import datetime
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "src"))
+
+from ebook_pipeline import PROJECT_ROOT
+from ebook_pipeline.config import load_config
+from ebook_pipeline.build import build_book
 
 
-CONTENT_DIR = "content"
-BUILD_DIR = "build"
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Concatenate Markdown chapters into build/book.md.")
+    parser.add_argument(
+        "--series",
+        default="yc-ai-startup-school",
+        help="Series slug declared in config/series.json.",
+    )
+    parser.add_argument(
+        "--metadata",
+        default="",
+        help="Optional override for metadata file (YAML key:value pairs).",
+    )
+    args = parser.parse_args()
 
+    config = load_config()
+    series = config.get(args.series)
+    paths = series.to_paths()
+    if args.metadata:
+        md_path = Path(args.metadata)
+        if not md_path.is_absolute():
+            md_path = (PROJECT_ROOT / args.metadata).resolve()
+        metadata_path = md_path
+    else:
+        metadata_path = paths.metadata_path
 
-def list_markdown_files(path: str):
-    files = [f for f in os.listdir(path) if f.lower().endswith('.md')]
-    files.sort()  # relies on numeric prefixes like 01-, 02-
-    return [os.path.join(path, f) for f in files]
-
-
-def read_file(path: str) -> str:
-    with open(path, 'r', encoding='utf-8') as f:
-        return f.read().rstrip() + "\n\n"
-
-
-def ensure_dirs():
-    os.makedirs(BUILD_DIR, exist_ok=True)
-
-
-def build_title_page() -> str:
-    # Lightweight title page; Pandoc can replace with metadata if used.
-    title = "YC AI Startup School"
-    subtitle = "Talks compiled into an eBook"
-    author = "Y Combinator — Speakers"
-    date = datetime.now().strftime("%Y-%m-%d")
-    parts = [
-        f"# {title}",
-        f"\n_{subtitle}_\n",
-        f"\n{author}\n",
-        f"\n{date}\n",
-        "\n---\n\n",
-    ]
-    return "\n".join(parts)
-
-
-def build_book_md(files):
-    parts = [build_title_page()]
-    for path in files:
-        parts.append(read_file(path))
-    return "".join(parts)
-
-
-def write_output(content: str, out_path: str):
-    with open(out_path, 'w', encoding='utf-8') as f:
-        f.write(content)
-
-
-def main():
-    ensure_dirs()
-    if not os.path.isdir(CONTENT_DIR):
-        print(f"Missing '{CONTENT_DIR}' directory. Nothing to build.", file=sys.stderr)
-        sys.exit(1)
-
-    files = list_markdown_files(CONTENT_DIR)
-    if not files:
-        print("No chapter files found in 'content/'.", file=sys.stderr)
-        sys.exit(1)
-
-    book_md = build_book_md(files)
-    out_md = os.path.join(BUILD_DIR, "book.md")
-    write_output(book_md, out_md)
-    print(f"Built: {out_md}")
+    build_book(paths, metadata_path=metadata_path)
 
 
 if __name__ == "__main__":
     main()
-

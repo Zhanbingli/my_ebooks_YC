@@ -59,28 +59,28 @@ YC AI Startup School 电子书构建项目总结报告
 
 七、完整复现步骤（不含私有凭证）
 1) 导出视频清单
-- `python3 scripts/fetch_yc_ai_startup_school.py --export-videos --out talks.json`
+- `python3 scripts/fetch_yc_ai_startup_school.py --series yc-ai-startup-school --export-videos`
 
 2) 首选抓取路径（任选其一）
 - A) yt-dlp + cookies.txt（不下载视频，仅字幕）
-  - `python3 scripts/download_subs.py --videos-json build/videos.json --cookies cookies.txt --out talks.json`
+  - `python3 scripts/download_subs.py --series yc-ai-startup-school --cookies cookies.txt`
 - B) Playwright（真实浏览器，不下载视频）
   - `python3 -m pip install --user playwright==1.46.0`
   - 小范围测试：
-    - `python3 scripts/fetch_transcripts_playwright.py --videos-json build/videos.json --cookies cookies.txt --out talks.json --limit 2 --headless`
+    - `python3 scripts/fetch_transcripts_playwright.py --series yc-ai-startup-school --cookies cookies.txt --limit 2 --headless`
   - 全量：
-    - `python3 scripts/fetch_transcripts_playwright.py --videos-json build/videos.json --cookies cookies.txt --out talks.json --headless`
+    - `python3 scripts/fetch_transcripts_playwright.py --series yc-ai-startup-school --cookies cookies.txt --headless`
 - C) 人工供稿（完全离线）
   - 按 talks.sample.json 格式，手工整理后：
-    - `python3 scripts/ingest_json.py --input talks.json`
+    - `python3 scripts/ingest_json.py --series yc-ai-startup-school`
 
 3) 生成章节与合并书稿
-- `python3 scripts/ingest_json.py --input talks.json --overwrite`
-- `python3 scripts/build_book.py`（输出：build/book.md）
+- `python3 scripts/ingest_json.py --series yc-ai-startup-school --overwrite`
+- `python3 scripts/build_book.py --series yc-ai-startup-school`（输出：build/yc-ai-startup-school/book.md）
 
 4) 可选导出 EPUB/PDF（需 Pandoc）
-- `pandoc --metadata-file=metadata.yaml -o build/yc-ai-startup-school.epub content/*.md`
-- `pandoc --metadata-file=metadata.yaml -o build/yc-ai-startup-school.pdf content/*.md`
+- `pandoc --metadata-file=metadata/yc-ai-startup-school.yaml -o build/yc-ai-startup-school/yc-ai-startup-school.epub content/yc-ai-startup-school/*.md`
+- `pandoc --metadata-file=metadata/yc-ai-startup-school.yaml -o build/yc-ai-startup-school/yc-ai-startup-school.pdf content/yc-ai-startup-school/*.md`
 
 八、后续工作建议
 - 若需“完整正文”：
@@ -100,4 +100,3 @@ YC AI Startup School 电子书构建项目总结报告
 
 十、结语
 - 今日完成了从脚手架、抓取管线到构建输出的整体工程化搭建，并验证了多条抓取路径。在当前环境与账号设置下，YouTube 端口径对字幕访问存在限制，导致无法即时获得全文。为如期交付完整电子书，下一步建议采用“仅音频离线转写”的技术路线，以稳定、可复现的方式生产高质量英文正文，并继续完善排版与导出方案。
-

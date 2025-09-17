@@ -1,65 +1,63 @@
-YC AI Startup School — eBook
+YC AI Startup School — eBook Toolkit
 
 Overview
-- Goal: compile YC’s AI Startup School talks into an English eBook, one chapter per speaker.
-- This repo provides a simple, dependency-light workflow you can use offline to organize content and build outputs with Pandoc (optional).
+- Offline-first tooling to turn YouTube talks into a polished eBook.
+- Supports multiple series via `config/series.json`; default slug: `yc-ai-startup-school`.
+- Unified CLI (`my-ebook` or `python -m ebook_pipeline.cli`) orchestrates discovery, subtitle fetching, ingestion, polishing, and book assembly.
 
-Quick Start
-- Put transcripts into `talks.json` (see `talks.sample.json`).
-- Generate chapter Markdown files: `python3 scripts/ingest_json.py --input talks.json`.
-- Concatenate into a single book Markdown: `python3 scripts/build_book.py`.
-- Optional: build EPUB/PDF with Pandoc (examples below).
+Project Layout
+- `config/series.json` — catalogue of series and metadata paths.
+- `data/<slug>/` — raw assets (`videos.json`, `talks.json`, `subs/`).
+- `content/<slug>/` — Markdown chapters (generated).
+- `build/<slug>/` — compiled manuscripts (`book.md`, export targets).
+- `metadata/<slug>.yaml` — key/value pairs for title page defaults.
+- `src/ebook_pipeline/` — reusable Python package powering the toolkit.
 
-Auto-Fetch (recommended)
-- Discover playlist and export video list (no transcripts yet):
-  - `python3 scripts/fetch_yc_ai_startup_school.py --export-videos --out talks.json`
-- Download subtitles with your own browser cookies using yt-dlp:
-  - First, ensure `yt-dlp` is installed (I can install it for you) and you are logged in to YouTube in the chosen browser.
-  - Example (Safari on macOS):
-    - `python3 scripts/download_subs.py --videos-json build/videos.json --browser safari --out talks.json`
-  - Supported values for `--browser`: `safari`, `chrome`, `edge`, `firefox`.
-  - Alternatively, export cookies to a Netscape-format file (cookies.txt) and pass it directly:
-    - `python3 scripts/download_subs.py --videos-json build/videos.json --cookies path/to/cookies.txt --out talks.json`
-- Then build chapters and the book:
-  - `python3 scripts/ingest_json.py --input talks.json`
-  - `python3 scripts/build_book.py`
+Quick Start (fresh repo)
+1. Ensure Python 3.9+ is available. Optional: install the CLI entry point:
+   - `python3 -m pip install --user -e .`
+   - or run via module: `python3 -m ebook_pipeline.cli --help`
+2. Inspect configured series:
+   - `my-ebook list`
+3. Run the end-to-end pipeline:
+   - `my-ebook update`
+   - Adds/refreshes `data/yc-ai-startup-school/talks.json`, regenerates Markdown under `content/yc-ai-startup-school/`, and builds `build/yc-ai-startup-school/book.md`.
 
-Option: Playwright Transcript Scraper (UI)
-- If YouTube blocks timedtext/yt-dlp in your environment, use the transcript panel via Playwright:
-  1) Install Playwright: `python3 -m pip install --user playwright`
-  2) Prefer using your installed Chrome to avoid big downloads: the script uses `channel=chrome` by default.
-  3) Provide `cookies.txt` exported from your browser (Netscape format) in repo root.
-  4) Run a small test (headless):
-     - `python3 scripts/fetch_transcripts_playwright.py --videos-json build/videos.json --cookies cookies.txt --out talks.json --limit 2 --headless`
-     - If it fails, try headful mode to watch it click UI: `python3 scripts/fetch_transcripts_playwright.py --videos-json build/videos.json --cookies cookies.txt --out talks.json --limit 2 --show`
-  5) Full run:
-     - `python3 scripts/fetch_transcripts_playwright.py --videos-json build/videos.json --cookies cookies.txt --out talks.json --headless`
-  6) Build:
-     - `python3 scripts/ingest_json.py --input talks.json --overwrite`
-     - `python3 scripts/build_book.py`
+CLI Highlights
+- `my-ebook fetch` — discover playlist + fetch transcripts (falls back to YouTube APIs).
+- `my-ebook subtitles` — download `.vtt` subs via yt-dlp (requires logged-in browser or cookies).
+- `my-ebook enrich` — clean transcripts and optionally ask yt-dlp for missing dates.
+- `my-ebook ingest` — turn `talks.json` into numbered chapter Markdown.
+- `my-ebook polish` — tidy filler language, casing, headings.
+- `my-ebook build` — concatenate chapters into `build/<slug>/book.md`.
+- `my-ebook update` — orchestrated pipeline with flags for skipping/focusing steps (`--with-subtitles`, `--use-yt-dlp`, `--skip-polish`, etc.).
 
-Repo Layout
-- `content/` — one Markdown file per talk (chapters).
-- `build/` — generated outputs (`book.md`, optional `.epub`/`.pdf`).
-- `scripts/` — helpers to ingest structured data and build the book.
-- `metadata.yaml` — book-level metadata (title, author, language, etc.).
+Working With YouTube Resources
+- Default discovery targets `YC AI Startup School`; override with `--playlist-id` or `--query` per command.
+- Subtitle options:
+  - `my-ebook subtitles --browser chrome` (uses yt-dlp `--cookies-from-browser`).
+  - `my-ebook subtitles --cookies path/to/cookies.txt` (Netscape export).
+- Playwright fallback: `scripts/fetch_transcripts_playwright.py --series yc-ai-startup-school --show` for hostile environments.
 
-Supplying Content
-- Preferred: add talks to `talks.json` with fields: `speaker`, `title`, `source_url` (optional), `date` (optional), and `transcript` (string).
-- If you want me to fetch talks automatically from YC/YouTube, please approve network access and provide either:
-  - A list of URLs for the talks you want, or
-  - Confirmation to use the official YC AI Startup School series (I’ll discover and pull all talks and transcripts, where available).
+Manual Scripts (still available)
+- Legacy scripts under `scripts/` now proxy to the shared package for users who rely on previous commands (e.g. `python3 scripts/ingest_json.py --series yc-ai-startup-school`).
+- Each accepts a `--series` flag so content for new playlists can live alongside existing material.
 
-Build Commands
-- Concatenate to `build/book.md`:
-  - `python3 scripts/build_book.py`
-- With Pandoc (if installed) to produce EPUB:
-  - `pandoc --metadata-file=metadata.yaml -o build/yc-ai-startup-school.epub content/*.md`
-- With Pandoc to produce PDF (requires a LaTeX engine, e.g. `tectonic`):
-  - `pandoc --metadata-file=metadata.yaml -o build/yc-ai-startup-school.pdf content/*.md`
+Customize or Add New Series
+1. Duplicate the entry in `config/series.json` with a new slug and metadata path.
+2. Place series-specific metadata in `metadata/<new-slug>.yaml` (simple key:value lines).
+3. Run `my-ebook update --series <new-slug> --query "Your Playlist"` and follow the usual workflow.
 
-Notes
-- No external Python packages are required; JSON is used instead of YAML for portability.
-- File names are auto-numbered and slugified for stable chapter ordering.
-- You can safely rerun the ingest script; pass `--overwrite` to replace existing chapter files.
- - If YouTube blocks automated transcript access, using `yt-dlp` with `--cookies-from-browser` is the most reliable way to fetch subtitles.
+Pandoc Exports (optional)
+- EPUB: `pandoc --metadata-file=metadata/yc-ai-startup-school.yaml -o build/yc-ai-startup-school/yc-ai-startup-school.epub content/yc-ai-startup-school/*.md`
+- PDF (LaTeX): `pandoc --metadata-file=metadata/yc-ai-startup-school.yaml -o build/yc-ai-startup-school/yc-ai-startup-school.pdf content/yc-ai-startup-school/*.md`
+
+Troubleshooting
+- Missing transcripts: try `--with-subtitles --browser chrome` or Playwright fallback.
+- yt-dlp not found: install via `python3 -m pip install yt-dlp` or set `YTDLP=/path/to/yt-dlp`.
+- Cookies: export Safari/Chrome cookies (`cookies.txt`) to bypass YouTube authentication checks.
+
+中文提示
+- 全流程可一键执行：`my-ebook update --with-subtitles --browser chrome --use-yt-dlp`。
+- 多系列并存：在 `config/series.json` 中新增条目，即可独立维护不同主题的资源与章节。
+- 如果被 YouTube 限制，可改用 `scripts/fetch_transcripts_playwright.py --show`，以浏览器界面方式抓取字幕。

@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ebook-pipeline"
+version = "0.1.0"
+description = "Offline-first tooling to build eBooks from YouTube transcripts."
+readme = "README.md"
+requires-python = ">=3.9"
+authors = [
+  { name = "YC AI Startup School Maintainers" }
+]
+dependencies = []
+
+[project.optional-dependencies]
+playwright = ["playwright>=1.44"]
+
+[project.scripts]
+my-ebook = "ebook_pipeline.cli:main"

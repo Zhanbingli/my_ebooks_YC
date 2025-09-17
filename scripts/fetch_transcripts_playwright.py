@@ -3,9 +3,16 @@ import argparse
 import json
 import os
 import re
-import sys
 import time
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+import sys
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "src"))
+
+from ebook_pipeline.config import load_config
+from ebook_pipeline.youtube import split_title_and_speaker, xml_to_paragraphs as yt_xml_to_paragraphs
 
 
 def load_videos(videos_json: str, limit: int = 0) -> List[Dict[str, Any]]:
@@ -67,9 +74,8 @@ def prefer_en_track(tracks: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
 
 
 def xml_to_paragraphs(xml_text: str) -> str:
-    # Reuse logic from fetch_yc_ai_startup_school to keep formatting consistent
-    from fetch_yc_ai_startup_school import xml_to_paragraphs as _x
-    return _x(xml_text)
+    # Reuse logic from the shared youtube helpers to keep formatting consistent
+    return yt_xml_to_paragraphs(xml_text)
 
 
 def extract_transcript_via_innertube(page) -> Optional[str]:
@@ -173,8 +179,9 @@ def extract_transcript_via_ui(page) -> Optional[str]:
 
 def main():
     parser = argparse.ArgumentParser(description='Fetch YouTube transcripts via Playwright (Show transcript UI or innertube).')
-    parser.add_argument('--videos-json', default='build/videos.json', help='Videos list file (from --export-videos)')
-    parser.add_argument('--out', default='talks.json', help='Output talks JSON path')
+    parser.add_argument('--series', default='yc-ai-startup-school', help='Series slug configured in config/series.json')
+    parser.add_argument('--videos-json', default='', help='Videos list file (from --export-videos)')
+    parser.add_argument('--out', default='', help='Output talks JSON path')
     parser.add_argument('--limit', type=int, default=0, help='Limit number of videos to process (0=all)')
     parser.add_argument('--cookies', default='cookies.txt', help='Path to cookies.txt (Netscape format)')
     parser.add_argument('--headless', action='store_true', help='Run browser in headless mode')
@@ -182,10 +189,17 @@ def main():
     parser.add_argument('--channel', default='chrome', help='Browser channel to use (chrome, chromium, msedge)')
     args = parser.parse_args()
 
-    videos = load_videos(args.videos_json, args.limit)
+    series = load_config().get(args.series)
+    paths = series.to_paths()
+
+    videos_path = Path(args.videos_json) if args.videos_json else paths.videos_path
+    out_path = Path(args.out) if args.out else paths.talks_path
+
+    videos = load_videos(str(videos_path), args.limit)
     if not videos:
-        print('No videos to process.')
-        sys.exit(1)
+        raise SystemExit('No videos to process.')
+
+    cookies_path = Path(args.cookies) if args.cookies else None
 
     from playwright.sync_api import sync_playwright
     with sync_playwright() as p:
@@ -219,8 +233,8 @@ def main():
             viewport={'width': 1366, 'height': 900},
         )
         # Add cookies
-        if args.cookies and os.path.exists(args.cookies):
-            cookies = parse_cookies_txt(args.cookies)
+        if cookies_path and cookies_path.exists():
+            cookies = parse_cookies_txt(str(cookies_path))
             # Playwright requires domain cookies without leading dot sometimes; ensure path set
             for ck in cookies:
                 if 'path' not in ck or not ck['path']:
@@ -233,8 +247,6 @@ def main():
 
         page = context.new_page()
         talks: List[Dict[str, Any]] = []
-        from fetch_yc_ai_startup_school import split_title_and_speaker
-
         for i, v in enumerate(videos, start=1):
             vid = v.get('video_id')
             title = v.get('title') or ''
@@ -281,13 +293,13 @@ def main():
         browser.close()
 
     if not talks:
-        print('No transcripts fetched. Try running with --show (headful), or confirm cookies and availability of transcripts.')
-        sys.exit(2)
+        raise SystemExit('No transcripts fetched. Try --show (headful), or confirm cookies and transcript availability.')
 
-    out = { 'series': 'YC AI Startup School', 'talks': talks }
-    with open(args.out, 'w', encoding='utf-8') as f:
+    out = {'series': series.title, 'talks': talks}
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    with out_path.open('w', encoding='utf-8') as f:
         json.dump(out, f, ensure_ascii=False, indent=2)
-    print(f"Wrote: {args.out} ({len(talks)} talks)")
+    print(f"Wrote: {out_path} ({len(talks)} talks)")
 
 
 if __name__ == '__main__':

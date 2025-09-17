@@ -1,0 +1,14 @@
+{
+  "series": [
+    {
+      "slug": "yc-ai-startup-school",
+      "title": "YC AI Startup School",
+      "description": "YC AI Startup School talks compiled into an eBook.",
+      "youtube": {
+        "playlist_id": null,
+        "playlist_query": "YC AI Startup School"
+      },
+      "metadata_file": "metadata/yc-ai-startup-school.yaml"
+    }
+  ]
+}
