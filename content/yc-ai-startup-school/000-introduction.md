@@ -1,40 +1,44 @@
 # Introduction
 
-YC’s AI Startup School brings together founders, researchers, and operators who are charting the future of artificial intelligence. This eBook gathers the full transcripts from the 2024–2025 series into a single, searchable reference so you can revisit the lessons, strategies, and cautionary tales shared by the speakers. Each subsequent chapter focuses on one talk, preserving the original voice of the presenter while making it easy to skim, annotate, or quote.
+YC's AI Startup School convenes the founders, researchers, and operators who are charting the future of artificial intelligence. This collection gathers the complete transcripts from the 2024–2025 series, creating a single, searchable reference to the invaluable lessons, strategies, and cautionary tales shared by its speakers. Each chapter is dedicated to a single talk, preserving the presenter's unique voice while offering a format optimized for skimming, annotation, and citation.
 
 ## Why This Collection Exists
 
-In the live series, YC focused on the same questions that founders repeatedly ask: How do you ship AI products fast enough to matter? Where are the real moats when models are commoditised? What does a sustainable business look like in a world of agents, copilots, and hyperscale infrastructure? Rather than let those insights disappear into video archives, this compilation distills the conversations into text. Whether you are building the next agent platform or exploring research directions, the transcripts provide:
+The live series addressed the urgent questions every founder faces today: How do you ship AI products fast enough to be relevant? Where are the defensible moats when models become commoditized? What defines a sustainable business in a world of agents, copilots, and hyperscale infrastructure? 
+
+This compilation was created to prevent these vital insights from fading into video archives, distilling them into accessible text. Whether you are building the next agentic platform or exploring new research frontiers, these transcripts offer:
 
 - **First-hand execution advice** from leaders at Replit, OpenAI, Anthropic, Microsoft, and more.
-- **Technical deep dives** into topics such as multimodal intelligence, scaling training data, and the frontier of robotics.
-- **Strategic framing** on regulation, responsible deployment, and how to turn breakthroughs into enduring companies.
+- **Technical deep dives** into topics like multimodal intelligence, scaling training data, and the frontiers of robotics.
+- **Strategic framing** on regulation, responsible deployment, and turning breakthroughs into enduring companies.
 
-## How the Book Is Organized
+## How This Book Is Organized
 
-- **Chapter 0 (this introduction)** sets the context, suggests reading paths, and points to supporting resources in the repository.
-- **Chapters 1–14** present each talk chronologically. Chapter headers list speaker, title, date, and the original YouTube link for convenience.
-- **Speaker transcripts** are lightly cleaned to remove filler words and align formatting, but the substance and tone of the talks remain unchanged.
+- **Chapter 0 (This Introduction):** Sets the context, suggests thematic reading paths, and points to supporting resources.
+- **Chapters 1–14:** Present each talk chronologically. Chapter headers include the speaker, title, and a link to the original video for convenience.
+- **Speaker Transcripts:** Have been lightly edited to remove filler words and standardize formatting, but the substance and tone of the talks remain unchanged.
 
-If you prefer to read thematically, consider grouping the chapters:
+For a thematic approach, consider grouping the chapters as follows:
 
-1. **Building AI Products** – Amjad Masad, Michael Truell, Dylan Field, Andrej Karpathy.
-2. **Scaling Infrastructure & Research** – Jared Kaplan, Fei-Fei Li, John Jumper, Satya Nadella, Sam Altman.
-3. **Frontier Outlook & Society** – Chelsea Finn, François Chollet, Elon Musk.
-4. **Search, Agents, and User Interfaces** – Aravind Srinivas, Andrew Ng.
+1.  **Building AI Products:** Amjad Masad, Michael Truell, Dylan Field, Andrej Karpathy.
+2.  **Scaling Infrastructure & Research:** Jared Kaplan, Fei-Fei Li, John Jumper, Satya Nadella, Sam Altman.
+3.  **Frontier Outlook & Society:** Chelsea Finn, François Chollet, Elon Musk.
+4.  **Search, Agents, and User Interfaces:** Aravind Srinivas, Andrew Ng.
 
 ## Tips for Using the Transcripts
 
-- **Skim first, then drill down.** The first paragraph of every chapter offers a quick gauge of the talk’s focus. From there, jump to sections labelled “Key Ideas” or “Applications.”
-- **Annotate in your tool of choice.** Because each transcript is plain Markdown, you can import chapters into Obsidian, Notion, or any e-reader to add highlights.
-- **Compare revisions.** The repository includes the scripts that fetched, cleaned, and polished the transcripts. When YC releases new sessions, rerun the workflow to append chapters automatically.
+- **Skim First, Drill Down:** Use the first paragraph of each chapter to quickly gauge its focus, then jump to sections of interest.
+- **Annotate Freely:** As plain Markdown files, these chapters can be imported into your tool of choice—such as Obsidian or Notion—for highlighting and note-taking.
+- **Compare Revisions:** The accompanying repository includes the original scripts used to fetch and clean the transcripts, allowing you to update the collection as new sessions are released.
 
 ## Licensing and Attribution
 
-All talks remain the intellectual property of their respective speakers and Y Combinator. This compilation exists to make the content easier to study and cross-reference; if you share extracts, please credit the speaker and include a link to the source video. The repository’s metadata files record upload dates and YouTube URLs for quick reference.
+All talks are the intellectual property of their respective speakers and Y Combinator. This compilation is intended for educational purposes, making the content easier to study and cross-reference. If you share excerpts, please credit the original speaker and link to the source video. The repository's metadata provides all necessary attribution details, including recording dates and source URLs.
 
 ## Looking Ahead
 
-Artificial intelligence is evolving quickly, and so is the curriculum. Future iterations of this eBook may include new playlists, complementary reading lists, or translations. Contributions are welcome—feel free to adapt the configuration to track other series or to enrich chapters with summaries, callout boxes, or diagrams. For now, take this text as a companion to your own experiments: use it to revisit a favourite insight, to onboard teammates, or simply to keep the spirit of the AI Startup School alive between product launches.
+Artificial intelligence is evolving at a breathtaking pace, and this curriculum will evolve with it. Future iterations of this collection may include new talks, curated reading lists, or translations. Contributions are welcome; feel free to adapt the project to track other series or enrich the chapters with summaries and diagrams.
 
-Enjoy the talks, and build something remarkable.
+For now, consider this text a companion to your own work. Use it to revisit a key insight, onboard a teammate, or simply keep the spirit of the AI Startup School alive as you build the future.
+
+Enjoy the talks—and build something remarkable.
