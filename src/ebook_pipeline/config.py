@@ -14,6 +14,17 @@ from .paths import SeriesPaths
 CONFIG_PATH = PROJECT_ROOT / "config" / "series.json"
 
 
+def resolve_config_path(path: Optional[str | Path]) -> Path:
+    """Normalize a user-supplied config path against the working root."""
+
+    if path is None or path == "":
+        return CONFIG_PATH
+    candidate = Path(path).expanduser()
+    if not candidate.is_absolute():
+        candidate = (PROJECT_ROOT / candidate).resolve()
+    return candidate
+
+
 @dataclass
 class SeriesConfig:
     slug: str
@@ -50,8 +61,8 @@ class Config:
             raise KeyError(f"Unknown series slug '{slug}'.") from exc
 
 
-def load_config(path: Optional[Path] = None) -> Config:
-    cfg_path = path or CONFIG_PATH
+def load_config(path: Optional[Path | str] = None) -> Config:
+    cfg_path = resolve_config_path(path)
     if not cfg_path.exists():
         raise FileNotFoundError(f"Missing config file: {cfg_path}")
     with open(cfg_path, "r", encoding="utf-8") as f:
@@ -63,4 +74,36 @@ def load_config(path: Optional[Path] = None) -> Config:
     return Config(series)
 
 
-__all__ = ["Config", "SeriesConfig", "load_config", "CONFIG_PATH"]
+def load_or_create_config(cfg_path: Path) -> Dict[str, Any]:
+    """Return config dict, creating a basic structure if missing."""
+
+    if not cfg_path.exists():
+        return {"series": []}
+    with cfg_path.open("r", encoding="utf-8") as fh:
+        raw = json.load(fh)
+    if not isinstance(raw, dict):
+        raise ValueError("Invalid config format: expected a JSON object.")
+    if "series" not in raw or not isinstance(raw["series"], list):
+        raw["series"] = []
+    return raw
+
+
+def write_config(config: Dict[str, Any], path: Optional[Path | str] = None) -> Path:
+    """Persist config JSON with stable formatting."""
+
+    cfg_path = resolve_config_path(path)
+    cfg_path.parent.mkdir(parents=True, exist_ok=True)
+    with cfg_path.open("w", encoding="utf-8") as fh:
+        json.dump(config, fh, ensure_ascii=False, indent=2)
+    return cfg_path
+
+
+__all__ = [
+    "Config",
+    "SeriesConfig",
+    "CONFIG_PATH",
+    "load_config",
+    "load_or_create_config",
+    "resolve_config_path",
+    "write_config",
+]

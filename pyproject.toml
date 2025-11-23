@@ -11,10 +11,19 @@ requires-python = ">=3.9"
 authors = [
   { name = "YC AI Startup School Maintainers" }
 ]
-dependencies = []
+dependencies = [
+  "youtube-transcript-api>=0.6.0",
+]
 
 [project.optional-dependencies]
 playwright = ["playwright>=1.44"]
+dev = ["pytest>=8.0.0", "ruff>=0.6.0"]
 
 [project.scripts]
 my-ebook = "ebook_pipeline.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

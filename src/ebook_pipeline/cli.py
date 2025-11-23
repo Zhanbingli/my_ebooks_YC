@@ -3,12 +3,21 @@
 from __future__ import annotations
 
 import argparse
+import json
+from datetime import date
 from pathlib import Path
 from typing import List, Optional
 
 from . import PROJECT_ROOT
 from .build import build_book
-from .config import Config, load_config
+from .config import (
+    CONFIG_PATH,
+    Config,
+    load_config,
+    load_or_create_config,
+    resolve_config_path,
+    write_config,
+)
 from .enrich import enrich_talks
 from .ingest import ingest_file
 from .paths import SeriesPaths
@@ -22,12 +31,109 @@ def parse_languages(value: str) -> List[str]:
     return langs or ["en"]
 
 
+def require_config(cfg: Optional[Config]) -> Config:
+    if cfg is None:
+        raise RuntimeError("Configuration is unavailable. Verify your --config path.")
+    return cfg
+
+
 def resolve_paths(cfg: Config, slug: str) -> SeriesPaths:
     series = cfg.get(slug)
     return series.to_paths()
 
 
-def cmd_list(cfg: Config, _args: argparse.Namespace) -> None:
+def cmd_init(_cfg: Optional[Config], args: argparse.Namespace) -> None:
+    cfg_path = resolve_config_path(args.config)
+    raw = load_or_create_config(cfg_path)
+    series_list = raw.get("series") or []
+    existing_idx = next((idx for idx, item in enumerate(series_list) if item.get("slug") == args.series), None)
+    if existing_idx is not None and not args.force:
+        print(f"Series '{args.series}' already exists in {cfg_path}. Use --force to replace it.")
+        return
+
+    metadata_rel = Path(args.metadata or f"metadata/{args.series}.yaml").as_posix()
+    entry = {
+        "slug": args.series,
+        "title": args.title or args.series.replace("-", " ").title(),
+        "description": args.description or "",
+        "youtube": {
+            "playlist_id": args.playlist_id or None,
+            "playlist_query": args.playlist_query or args.title or args.series,
+        },
+        "metadata_file": metadata_rel,
+    }
+
+    if existing_idx is not None:
+        series_list[existing_idx] = entry
+    else:
+        series_list.append(entry)
+    raw["series"] = sorted(series_list, key=lambda item: item.get("slug", ""))
+    cfg_path = write_config(raw, cfg_path)
+
+    paths = SeriesPaths(slug=args.series, metadata_file=metadata_rel)
+    paths.ensure()
+
+    metadata_path = paths.metadata_path
+    if metadata_path and (args.force or not metadata_path.exists()):
+        today = date.today()
+        metadata_path.write_text(
+            "\n".join(
+                [
+                    f"title: {entry['title']}",
+                    "subtitle: Talks compiled into an eBook",
+                    f"author: {entry['title']} Speakers",
+                    "language: en",
+                    f"copyright: © {today.year}",
+                    f"date: {today.isoformat()}",
+                ]
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+
+    if args.with_intro:
+        intro_path = paths.content_dir / "000-introduction.md"
+        if args.force or not intro_path.exists():
+            intro = "\n".join(
+                [
+                    "# Introduction",
+                    "",
+                    f"{entry['title']} — generated with the eBook pipeline.",
+                    "",
+                    "Update the content by running:",
+                    "",
+                    f"- `my-ebook fetch --series {args.series}`",
+                    f"- `my-ebook ingest --series {args.series}`",
+                    f"- `my-ebook polish --series {args.series}`",
+                    f"- `my-ebook build --series {args.series}`",
+                    "",
+                    "Add or edit chapters in the content folder; rerun build to refresh the manuscript.",
+                ]
+            )
+            intro_path.write_text(intro + "\n", encoding="utf-8")
+
+    try:
+        rel_cfg = cfg_path.relative_to(PROJECT_ROOT)
+    except ValueError:
+        rel_cfg = cfg_path
+    print(f"Initialized series '{args.series}'")
+    print(f"- Config: {rel_cfg}")
+    if metadata_path:
+        try:
+            rel_meta = metadata_path.relative_to(PROJECT_ROOT)
+        except ValueError:
+            rel_meta = metadata_path
+        print(f"- Metadata: {rel_meta}")
+    for label, p in (("Data dir", paths.data_dir), ("Content dir", paths.content_dir), ("Build dir", paths.build_dir)):
+        try:
+            rel = p.relative_to(PROJECT_ROOT)
+        except ValueError:
+            rel = p
+        print(f"- {label}: {rel}")
+
+
+def cmd_list(cfg: Optional[Config], _args: argparse.Namespace) -> None:
+    cfg = require_config(cfg)
     print("Available series:")
     for series in cfg.list_series():
         paths = series.to_paths()
@@ -37,7 +143,8 @@ def cmd_list(cfg: Config, _args: argparse.Namespace) -> None:
         print(f"    build: {paths.build_dir.relative_to(PROJECT_ROOT)}")
 
 
-def cmd_fetch(cfg: Config, args: argparse.Namespace) -> None:
+def cmd_fetch(cfg: Optional[Config], args: argparse.Namespace) -> None:
+    cfg = require_config(cfg)
     series = cfg.get(args.series)
     paths = series.to_paths()
     languages = parse_languages(args.langs)
@@ -57,7 +164,8 @@ def cmd_fetch(cfg: Config, args: argparse.Namespace) -> None:
         raise SystemExit(str(exc))
 
 
-def cmd_subtitles(cfg: Config, args: argparse.Namespace) -> None:
+def cmd_subtitles(cfg: Optional[Config], args: argparse.Namespace) -> None:
+    cfg = require_config(cfg)
     paths = resolve_paths(cfg, args.series)
     videos_path = Path(args.videos_json) if args.videos_json else None
     cookies_path = Path(args.cookies) if args.cookies else None
@@ -72,13 +180,15 @@ def cmd_subtitles(cfg: Config, args: argparse.Namespace) -> None:
     )
 
 
-def cmd_ingest(cfg: Config, args: argparse.Namespace) -> None:
+def cmd_ingest(cfg: Optional[Config], args: argparse.Namespace) -> None:
+    cfg = require_config(cfg)
     paths = resolve_paths(cfg, args.series)
     input_path = Path(args.input) if args.input else paths.talks_path
     ingest_file(paths, input_path, start_index=args.start_index, overwrite=args.overwrite)
 
 
-def cmd_enrich(cfg: Config, args: argparse.Namespace) -> None:
+def cmd_enrich(cfg: Optional[Config], args: argparse.Namespace) -> None:
+    cfg = require_config(cfg)
     paths = resolve_paths(cfg, args.series)
     input_path = Path(args.input) if args.input else paths.talks_path
     output_path = Path(args.out) if args.out else None
@@ -98,13 +208,15 @@ def cmd_enrich(cfg: Config, args: argparse.Namespace) -> None:
         print("No changes required (transcripts clean and metadata present).")
 
 
-def cmd_polish(cfg: Config, args: argparse.Namespace) -> None:
+def cmd_polish(cfg: Optional[Config], args: argparse.Namespace) -> None:
+    cfg = require_config(cfg)
     paths = resolve_paths(cfg, args.series)
     file_path = Path(args.file) if args.file else None
     polish_series(paths, file=file_path)
 
 
-def cmd_build(cfg: Config, args: argparse.Namespace) -> None:
+def cmd_build(cfg: Optional[Config], args: argparse.Namespace) -> None:
+    cfg = require_config(cfg)
     series = cfg.get(args.series)
     paths = series.to_paths()
     metadata_path: Optional[Path]
@@ -118,7 +230,8 @@ def cmd_build(cfg: Config, args: argparse.Namespace) -> None:
     build_book(paths, metadata_path=metadata_path)
 
 
-def cmd_update(cfg: Config, args: argparse.Namespace) -> None:
+def cmd_update(cfg: Optional[Config], args: argparse.Namespace) -> None:
+    cfg = require_config(cfg)
     series = cfg.get(args.series)
     paths = series.to_paths()
     languages = parse_languages(args.langs)
@@ -175,7 +288,23 @@ def cmd_update(cfg: Config, args: argparse.Namespace) -> None:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Manage eBook generation from YouTube content.")
+    parser.add_argument(
+        "--config",
+        default="",
+        help=f"Path to config file (default: {CONFIG_PATH.relative_to(PROJECT_ROOT)})",
+    )
     sub = parser.add_subparsers(dest="command", required=True)
+
+    sp = sub.add_parser("init", help="Bootstrap a new series and folder layout")
+    sp.add_argument("--series", required=True, help="Series slug (e.g. yc-ai-startup-school)")
+    sp.add_argument("--title", default="", help="Human-readable series title.")
+    sp.add_argument("--description", default="", help="One-line description for the series.")
+    sp.add_argument("--metadata", default="", help="Metadata YAML path (relative to project root).")
+    sp.add_argument("--playlist-id", default="", help="Playlist ID to lock onto.")
+    sp.add_argument("--playlist-query", default="", help="Playlist search query fallback.")
+    sp.add_argument("--with-intro", action="store_true", help="Create a starter introduction file.")
+    sp.add_argument("--force", action="store_true", help="Overwrite existing config and intro/metadata files.")
+    sp.set_defaults(func=cmd_init)
 
     sp = sub.add_parser("list", help="List configured series")
     sp.set_defaults(func=cmd_list)
@@ -245,9 +374,11 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: Optional[List[str]] = None) -> None:
-    cfg = load_config()
     parser = build_parser()
     args = parser.parse_args(argv)
+    cfg: Optional[Config] = None
+    if getattr(args, "command", "") != "init":
+        cfg = load_config(resolve_config_path(args.config))
     func = getattr(args, "func")
     func(cfg, args)
 
