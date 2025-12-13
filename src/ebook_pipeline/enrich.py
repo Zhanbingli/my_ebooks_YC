@@ -3,15 +3,14 @@
 from __future__ import annotations
 
 import json
-import os
 import re
-import shutil
 import subprocess
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from .paths import SeriesPaths
+from .utils import find_yt_dlp
 
 
 def run_json(cmd: List[str]) -> Optional[Dict[str, Any]]:
@@ -23,27 +22,6 @@ def run_json(cmd: List[str]) -> Optional[Dict[str, Any]]:
         return json.loads(data)
     except Exception:
         return None
-
-
-def find_yt_dlp() -> Optional[Path]:
-    for env in ("YTDLP", "YT_DLP"):
-        val = os.environ.get(env)
-        if val:
-            path = Path(val).expanduser()
-            if path.exists():
-                return path
-    which = shutil.which("yt-dlp") or shutil.which("yt_dlp")
-    if which:
-        return Path(which)
-    candidates = [
-        Path(".venv/bin/yt-dlp"),
-        Path("/opt/homebrew/bin/yt-dlp"),
-        Path("~/Library/Python/3.9/bin/yt-dlp").expanduser(),
-    ]
-    for cand in candidates:
-        if cand.exists():
-            return cand
-    return None
 
 
 def normalize_date(yyyymmdd: str) -> Optional[str]:

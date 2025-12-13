@@ -21,6 +21,23 @@ UA = (
 )
 
 
+def extract_video_id(url_or_id: str) -> Optional[str]:
+    """Return an 11-character video id from a YouTube URL or a bare id."""
+
+    candidate = (url_or_id or "").strip()
+    if not candidate:
+        return None
+    if re.fullmatch(r"[A-Za-z0-9_-]{11}", candidate):
+        return candidate
+    m = re.search(r"[?&]v=([A-Za-z0-9_-]{11})", candidate)
+    if m:
+        return m.group(1)
+    m = re.search(r"youtu\.be/([A-Za-z0-9_-]{11})", candidate)
+    if m:
+        return m.group(1)
+    return None
+
+
 def fetch(url: str, retries: int = 3, sleep: float = 0.5) -> str:
     last_err = None
     for i in range(retries):
@@ -108,6 +125,7 @@ def fetch_video_meta(video_id: str) -> Dict[str, Any]:
     vd = pr.get('videoDetails', {})
     mf = pr.get('microformat', {}).get('playerMicroformatRenderer', {})
     meta = {
+        'title': vd.get('title') or '',
         'shortDescription': vd.get('shortDescription') or '',
         'author': vd.get('author') or '',
         'publishDate': mf.get('publishDate') or '',
@@ -538,6 +556,44 @@ def assemble_talk_entry(video: Dict[str, Any], langs: List[str]) -> Optional[Dic
     }
 
 
+def fetch_single_transcript(video_url_or_id: str, langs: List[str]) -> Optional[Dict[str, str]]:
+    """Fetch a single video's transcript plus basic metadata."""
+
+    vid = extract_video_id(video_url_or_id)
+    if not vid:
+        raise ValueError("Invalid YouTube URL or video id.")
+
+    transcript = fetch_transcript_with_library(vid, langs) or ""
+    if not transcript:
+        xml_text = fetch_transcript_from_player_response(vid) or fetch_transcript_xml(vid, langs)
+        transcript = xml_to_paragraphs(xml_text) if xml_text else ""
+
+    try:
+        meta = fetch_video_meta(vid)
+    except Exception:
+        meta = {}
+
+    raw_title = (meta.get("title") or "").strip()
+    talk_title, speaker = split_title_and_speaker(raw_title or vid)
+    if not talk_title:
+        talk_title = raw_title or f"Video {vid}"
+    if not speaker:
+        speaker = meta.get("author") or "Unknown Speaker"
+
+    if not transcript:
+        return None
+
+    return {
+        "video_id": vid,
+        "title": talk_title,
+        "speaker": speaker,
+        "date": meta.get("publishDate") or "",
+        "source_url": f"https://www.youtube.com/watch?v={vid}",
+        "transcript": transcript.strip() + "\n",
+        "raw_title": raw_title or "",
+    }
+
+
 class PlaylistDiscoveryError(RuntimeError):
     """Raised when a playlist cannot be discovered."""
 
@@ -631,9 +687,12 @@ def fetch_and_store(
 
 
 __all__ = [
+    "extract_video_id",
     "PlaylistDiscoveryError",
     "assemble_talk_entry",
     "fetch_and_store",
+    "fetch_single_transcript",
+    "fetch_video_meta",
     "find_playlist_id",
     "get_playlist_videos",
     "get_yt_initial_player_response",

@@ -18,6 +18,7 @@ from .config import (
     resolve_config_path,
     write_config,
 )
+from .doctor import doctor
 from .enrich import enrich_talks
 from .ingest import ingest_file
 from .paths import SeriesPaths
@@ -141,6 +142,15 @@ def cmd_list(cfg: Optional[Config], _args: argparse.Namespace) -> None:
         print(f"    data: {paths.data_dir.relative_to(PROJECT_ROOT)}")
         print(f"    content: {paths.content_dir.relative_to(PROJECT_ROOT)}")
         print(f"    build: {paths.build_dir.relative_to(PROJECT_ROOT)}")
+
+
+def cmd_doctor(cfg: Optional[Config], args: argparse.Namespace) -> None:
+    cfg_path = resolve_config_path(args.config)
+    issues = doctor(cfg, config_path=cfg_path, series_slug=(args.series or None), verbose=args.verbose)
+    if issues:
+        print(f"\nFound {issues} issue(s). Fix the hints above and rerun `my-ebook doctor`.")
+    else:
+        print("\nEnvironment looks ready. Run `my-ebook update --series <slug>` to build your book.")
 
 
 def cmd_fetch(cfg: Optional[Config], args: argparse.Namespace) -> None:
@@ -309,6 +319,11 @@ def build_parser() -> argparse.ArgumentParser:
     sp = sub.add_parser("list", help="List configured series")
     sp.set_defaults(func=cmd_list)
 
+    sp = sub.add_parser("doctor", help="Check environment, dependencies, and expected files")
+    sp.add_argument("--series", default="", help="Limit checks to a single series slug.")
+    sp.add_argument("--verbose", action="store_true", help="Show informational checks.")
+    sp.set_defaults(func=cmd_doctor)
+
     sp = sub.add_parser("fetch", help="Fetch playlist metadata and transcripts")
     sp.add_argument("--series", default="yc-ai-startup-school")
     sp.add_argument("--playlist-id", default="")
@@ -377,7 +392,8 @@ def main(argv: Optional[List[str]] = None) -> None:
     parser = build_parser()
     args = parser.parse_args(argv)
     cfg: Optional[Config] = None
-    if getattr(args, "command", "") != "init":
+    command = getattr(args, "command", "")
+    if command not in ("init", "doctor"):
         cfg = load_config(resolve_config_path(args.config))
     func = getattr(args, "func")
     func(cfg, args)

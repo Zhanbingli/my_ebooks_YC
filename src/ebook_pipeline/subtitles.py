@@ -3,15 +3,14 @@
 from __future__ import annotations
 
 import json
-import os
 import re
-import shutil
 import subprocess
 from pathlib import Path
 from typing import Dict, List, Optional
 
 from . import PROJECT_ROOT
 from .paths import SeriesPaths
+from .utils import find_yt_dlp
 from .youtube import (
     get_yt_initial_player_response,
     split_title_and_speaker,
@@ -28,28 +27,6 @@ UA = (
 def run(cmd: List[str]) -> int:
     print("$", " ".join(cmd))
     return subprocess.call(cmd)
-
-
-def find_yt_dlp() -> Optional[Path]:
-    for env_var in ("YTDLP", "YT_DLP"):
-        val = os.environ.get(env_var)
-        if not val:
-            continue
-        env_path = Path(val).expanduser()
-        if env_path.exists():
-            return env_path
-    candidates = [
-        Path(".venv/bin/yt-dlp"),
-        Path("~/Library/Python/3.9/bin/yt-dlp").expanduser(),
-        Path("/opt/homebrew/bin/yt-dlp"),
-    ]
-    which = shutil.which("yt-dlp") or shutil.which("yt_dlp")
-    if which:
-        candidates.insert(0, Path(which))
-    for cand in candidates:
-        if cand.exists():
-            return cand
-    return None
 
 
 def find_vtt_for_video(subs_dir: Path, video_id: str) -> Optional[Path]:
